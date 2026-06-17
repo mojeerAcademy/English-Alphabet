@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alphabet Listening Quiz</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f4f3ee;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: #1a1a1a;
+  }
+  .game-wrap { width: 100%; max-width: 580px; }
+  .header { text-align: center; margin-bottom: 1.5rem; }
+  .header h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; color: #1a1a1a; }
+  .header p { font-size: 14px; color: #666; }
+  .score-bar { display: flex; gap: 10px; justify-content: center; margin-bottom: 1.5rem; }
+  .score-chip {
+    background: #fff;
+    border: 1px solid #e0ddd5;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+    min-width: 90px;
+  }
+  .score-chip span { font-weight: 600; font-size: 18px; color: #1a1a1a; display: block; }
+  .play-zone {
+    background: #fff;
+    border: 1px solid #e0ddd5;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .prompt { font-size: 15px; color: #888; margin-bottom: 1.25rem; }
+  .listen-btn {
+    background: #185FA5;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 18px 40px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 auto 1.75rem;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .listen-btn:hover { background: #0e4a82; }
+  .listen-btn:active { transform: scale(0.97); }
+  .listen-btn svg { width: 28px; height: 28px; flex-shrink: 0; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .choice-btn {
+    background: #f4f3ee;
+    border: 1.5px solid #d5d2c8;
+    border-radius: 14px;
+    padding: 22px 12px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, transform 0.1s;
+  }
+  .choice-btn:hover { background: #eae9e4; border-color: #aaa; }
+  .choice-btn:active { transform: scale(0.97); }
+  .choice-btn.correct { background: #d4edda; border-color: #2d8a4e; color: #1a5c34; }
+  .choice-btn.wrong   { background: #f8d7da; border-color: #b02a37; color: #7a1d24; }
+  .choice-btn.reveal  { background: #d4edda; border-color: #2d8a4e; color: #1a5c34; }
+  .choice-btn:disabled { cursor: not-allowed; opacity: 0.9; }
+  .feedback {
+    margin-top: 1.25rem;
+    font-size: 16px;
+    font-weight: 500;
+    min-height: 28px;
+    color: #1a1a1a;
+    line-height: 1.5;
+  }
+  .next-btn {
+    display: none;
+    margin: 1rem auto 0;
+    background: #fff;
+    border: 1.5px solid #c0bdb5;
+    border-radius: 10px;
+    padding: 10px 32px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #1a1a1a;
+    transition: background 0.12s;
+  }
+  .next-btn:hover { background: #f0efe9; }
+  .progress { font-size: 13px; color: #aaa; margin-top: 1rem; }
+
+  /* Tricky letters legend */
+  .tricky-legend {
+    background: #fff;
+    border: 1px solid #e0ddd5;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.8;
+  }
+  .tricky-legend strong { color: #1a1a1a; font-weight: 600; display: block; margin-bottom: 4px; }
+  .tricky-letter {
+    display: inline-block;
+    background: #FFF3CD;
+    border: 1px solid #f0c040;
+    color: #7a5c00;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 6px;
+    padding: 1px 7px;
+    margin: 2px;
+  }
+
+  /* End screen */
+  .end-screen { display: none; text-align: center; padding: 1rem 0; }
+  .end-screen h2 { font-size: 22px; font-weight: 600; margin-bottom: 0.5rem; }
+  .big-score { font-size: 56px; font-weight: 700; color: #185FA5; line-height: 1.1; }
+  .out-of { font-size: 15px; color: #888; margin-bottom: 1.5rem; }
+  .result-label { font-size: 18px; font-weight: 600; margin-bottom: 1.25rem; color: #1a1a1a; }
+  .tip-box {
+    background: #f4f3ee;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.9;
+    text-align: left;
+    margin-bottom: 1.5rem;
+  }
+  .tip-box strong { color: #1a1a1a; font-weight: 600; }
+  .tip-letter { font-weight: 700; font-size: 15px; color: #185FA5; }
+  .restart-btn {
+    background: #185FA5;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .restart-btn:hover { background: #0e4a82; }
+
+  /* Spinner for loading voice */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 0.8s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="game-wrap">
+  <div class="header">
+    <h1>🔤 Alphabet Listening Quiz</h1>
+    <p>Listen to the letter — then choose the correct one</p>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-chip">Score <span id="scoreVal">0</span></div>
+    <div class="score-chip">Correct <span id="correctVal">0/0</span></div>
+    <div class="score-chip">Streak 🔥 <span id="streakVal">0</span></div>
+  </div>
+
+  <div class="tricky-legend">
+    <strong>⚠️ Focus letters (appear more often):</strong>
+    <span class="tricky-letter">A</span>
+    <span class="tricky-letter">E</span>
+    <span class="tricky-letter">I</span>
+    <span class="tricky-letter">C</span>
+    <span class="tricky-letter">S</span>
+    <span class="tricky-letter">G</span>
+    <span class="tricky-letter">J</span>
+    <span class="tricky-letter">V</span>
+    <span class="tricky-letter">Y</span>
+    <span class="tricky-letter">W</span>
+  </div>
+
+  <div id="gameArea">
+    <div class="play-zone">
+      <p class="prompt">Press the speaker button to hear the letter</p>
+      <button class="listen-btn" id="listenBtn" onclick="speakCurrent()">
+        <svg id="speakerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+        Listen
+      </button>
+      <div class="choices" id="choicesGrid"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next →</button>
+      <p class="progress" id="progressTxt"></p>
+    </div>
+  </div>
+
+  <div class="end-screen" id="endScreen">
+    <h2>Round complete! 🎉</h2>
+    <p class="big-score" id="finalScore"></p>
+    <p class="out-of">out of 15 questions</p>
+    <p class="result-label" id="resultLabel"></p>
+    <div class="tip-box" id="tipBox"></div>
+    <button class="restart-btn" onclick="startGame()">▶ Play Again</button>
+  </div>
+</div>
+
+<script>
+const TRICKY = ['A','E','I','C','S','G','J','V','Y','W'];
+const ALL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+const TIPS = {
+  A: '"ay" — like "day", "say", "may"',
+  E: '"ee" — like "me", "see", "tree"',
+  I: '"eye" — like "my", "by", "fly"',
+  C: '"see" — like "sea", "me", "free"',
+  S: '"ess" — like in "dress", "mess"',
+  G: '"jee" — like "jeans", "gel"',
+  J: '"jay" — like "Jay" the name',
+  V: '"vee" — like "vitamin", "van"',
+  Y: '"why" — it IS the word "why"',
+  W: '"double-you" — 3 syllables!'
+};
+
+const CONFUSABLES = {
+  A: ['E','I','J','K'],
+  E: ['A','I','G','C'],
+  I: ['A','E','Y','J'],
+  C: ['S','Z','G','D'],
+  S: ['C','F','X','Z'],
+  G: ['J','C','Z','E'],
+  J: ['G','A','I','Y'],
+  V: ['B','W','U','F'],
+  Y: ['I','W','J','E'],
+  W: ['V','Y','U','M'],
+  B: ['D','P','E','V'],
+  D: ['B','T','P','G'],
+  F: ['S','V','X','E'],
+  H: ['A','J','K','N'],
+  K: ['Q','C','X','H'],
+  L: ['R','I','J','T'],
+  M: ['N','W','H','U'],
+  N: ['M','H','U','K'],
+  O: ['Q','U','A','C'],
+  P: ['B','D','Q','R'],
+  Q: ['O','U','G','K'],
+  R: ['L','N','A','P'],
+  T: ['D','I','F','L'],
+  U: ['V','W','O','N'],
+  X: ['Z','S','K','C'],
+  Z: ['S','X','C','G']
+};
+
+let queue = [], idx = 0, score = 0, correctCount = 0, streak = 0, answered = false, wrongLetters = [];
+
+function buildQueue() {
+  let q = [];
+  TRICKY.forEach(l => { q.push(l); q.push(l); });
+  const others = ALL.filter(l => !TRICKY.includes(l));
+  shuffle(others).slice(0, 5).forEach(l => q.push(l));
+  return shuffle(q).slice(0, 15);
+}
+
+function shuffle(arr) {
+  let a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  queue = buildQueue();
+  idx = 0; score = 0; correctCount = 0; streak = 0; wrongLetters = [];
+  updateScore();
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const letter = queue[idx];
+  const grid = document.getElementById('choicesGrid');
+  const feedback = document.getElementById('feedback');
+  const nextBtn = document.getElementById('nextBtn');
+  feedback.textContent = '';
+  nextBtn.style.display = 'none';
+  resetSpeakerIcon();
+
+  let pool = CONFUSABLES[letter] ? [...CONFUSABLES[letter]] : ALL.filter(l => l !== letter);
+  let distractors = shuffle(pool).slice(0, 3);
+  let options = shuffle([letter, ...distractors]);
+
+  grid.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt;
+    btn.onclick = () => checkAnswer(opt, letter);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('progressTxt').textContent = `Question ${idx + 1} of ${queue.length}`;
+}
+
+function resetSpeakerIcon() {
+  document.getElementById('speakerIcon').innerHTML = `
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+  `;
+}
+
+function speakCurrent() {
+  speakLetter(queue[idx]);
+}
+
+function speakLetter(letter, rate) {
+  window.speechSynthesis.cancel();
+  document.getElementById('speakerIcon').innerHTML = `<circle cx="12" cy="12" r="9" stroke-dasharray="28" stroke-dashoffset="0" class="spin"></circle>`;
+  const utter = new SpeechSynthesisUtterance(letter);
+  utter.rate = rate || 0.8;
+  utter.pitch = 1;
+  utter.lang = 'en-US';
+  utter.onend = resetSpeakerIcon;
+  utter.onerror = resetSpeakerIcon;
+  window.speechSynthesis.speak(utter);
+}
+
+function checkAnswer(chosen, correctLetter) {
+  if (answered) return;
+  answered = true;
+
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correctLetter) b.classList.add('reveal');
+    if (b.textContent === chosen && chosen !== correctLetter) b.classList.add('wrong');
+    if (b.textContent === chosen && chosen === correctLetter) {
+      b.classList.remove('reveal');
+      b.classList.add('correct');
+    }
+  });
+
+  const fb = document.getElementById('feedback');
+  if (chosen === correctLetter) {
+    score += 10 + (streak >= 2 ? 5 : 0);
+    correctCount++;
+    streak++;
+    fb.style.color = '#1a5c34';
+    fb.textContent = streak >= 3 ? `🔥 ${streak} in a row! Excellent!` : '✅ Correct! Well done!';
+  } else {
+    streak = 0;
+    wrongLetters.push(correctLetter);
+    fb.style.color = '#7a1d24';
+    fb.textContent = `❌ That was  ${correctLetter}. Listen again carefully!`;
+    setTimeout(() => speakLetter(correctLetter, 0.65), 700);
+  }
+
+  updateScore();
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function nextQuestion() {
+  idx++;
+  if (idx >= queue.length) { showEnd(); return; }
+  renderQuestion();
+}
+
+function updateScore() {
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('correctVal').textContent = correctCount + '/' + (idx > 0 ? idx : 0);
+  document.getElementById('streakVal').textContent = streak;
+}
+
+function showEnd() {
+  document.getElementById('gameArea').style.display = 'none';
+  const end = document.getElementById('endScreen');
+  end.style.display = 'block';
+  document.getElementById('finalScore').textContent = correctCount + ' / 15';
+  document.getElementById('correctVal').textContent = correctCount + '/15';
+
+  const pct = Math.round((correctCount / 15) * 100);
+  let label = pct === 100 ? '🏆 Perfect score! Amazing!' :
+              pct >= 80 ? '🌟 Great job! Almost there!' :
+              pct >= 60 ? '👍 Good effort! Keep practicing!' :
+                          '💪 Keep going! Practice makes perfect!';
+  document.getElementById('resultLabel').textContent = label;
+
+  const uniq = [...new Set(wrongLetters)];
+  let tipHtml = '';
+  if (uniq.length === 0) {
+    tipHtml = '<strong>🎉 Perfect!</strong> You got every single letter correct. Excellent work!';
+  } else {
+    tipHtml = '<strong>Letters to practice more:</strong><br><br>' +
+      uniq.map(l => `<span class="tip-letter">${l}</span> — ${TIPS[l] || 'Keep practicing this letter!'}`).join('<br>');
+  }
+  document.getElementById('tipBox').innerHTML = tipHtml;
+}
+
+startGame();
+</script>
+</body>
+</html>
